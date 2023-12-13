@@ -15,14 +15,13 @@ use pocketmine\world\World;
 use slapper\entities\SlapperEntity;
 use slapper\events\SlapperCreationEvent;
 use slapper\events\SlapperDeletionEvent;
-use slapper\SlapperInterface;
 
 class Main extends PluginBase implements Listener {
 
 	private $worldPlayerCount = null;
 
 	/**
-	 * @var \ethaniccc\SlapperPlayerCount\SlapperPlayerCountEntityInfo[]
+	 * @var SlapperPlayerCountEntityInfo[]
 	 */
 	private array $trackedSlappers = [];
 
@@ -33,11 +32,7 @@ class Main extends PluginBase implements Listener {
 		}
 
 		$updateTicks = (int)$this->getConfig()->get("update_ticks");
-		if(!is_integer($updateTicks)) {
-			$this->getLogger()->notice("The amount of update ticks is not a whole number and therefore has defaulted to updating every 100 ticks (5 seconds)");
-			$updateTicks = 100;
-		}
-		$this->getScheduler()->scheduleDelayedTask(new ClosureTask(function() use ($updateTicks) : void {
+        $this->getScheduler()->scheduleDelayedTask(new ClosureTask(function() use ($updateTicks) : void {
 			$this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function() : void {
 				$this->updateSlapper();
 			}), $updateTicks);
@@ -91,7 +86,7 @@ class Main extends PluginBase implements Listener {
 	 *
 	 * If an array is provided to $data a task will not be submitted but the data placed in the array.
 	 *
-	 * @param \pocketmine\entity\Entity $entity
+	 * @param Entity $entity
 	 * @param array|null                $data
 	 */
 	public function updateSlapperEntity(Entity $entity, ?array &$data = null) : void {
@@ -116,7 +111,7 @@ class Main extends PluginBase implements Listener {
 					$lines = explode("\n", $countInfo->getNameTemplate());
 					$line = 1;
 					foreach($lines as $num => $line) {
-						if(strpos($line, "world:") !== false) {
+						if(str_contains($line, "world:")) {
 							$line = $num;
 							break;
 						}
@@ -129,7 +124,7 @@ class Main extends PluginBase implements Listener {
 			$lines = explode("\n", $countInfo->getNameTemplate());
 			$line = 1;
 			foreach($lines as $num => $line) {
-				if(strpos($line, 'world:') !== false) {
+				if(str_contains($line, 'world:')) {
 					$line = $num;
 					break;
 				}
@@ -139,13 +134,13 @@ class Main extends PluginBase implements Listener {
 		}
 	}
 
-	private function loadTrackedSlapper(SlapperInterface $entity) : void {
+	private function loadTrackedSlapper(SlapperEntity $entity) : void {
 		$countInfo = $this->trackedSlappers[$entity->getId()] ?? null;
 		if($countInfo !== null) {
 			return;
 		}
 
-		$nbt = $entity->namedtag;
+		$nbt = $entity->saveNBT();
 
 		// Check for new player count data
 		$countInfo = SlapperPlayerCountEntityInfo::fromNBT($entity->getWorld(), $nbt);
@@ -165,17 +160,16 @@ class Main extends PluginBase implements Listener {
 
 			$this->trackedSlappers[$entity->getId()] = $countInfo;
 			$this->updateSlapperEntity($entity);
-			return;
 		}
 	}
 
-	private function saveTrackedSlapper(SlapperInterface $entity) : void {
+	private function saveTrackedSlapper(SlapperEntity $entity) : void {
 		$countInfo = $this->trackedSlappers[$entity->getId()] ?? null;
 		if($countInfo === null) {
 			return;
 		}
 
-		$countInfo->toNBT($entity->namedtag);
+		$countInfo->toNBT($entity->saveNBT());
 	}
 
 	public function onSlapperCreate(SlapperCreationEvent $ev) : void {
@@ -186,7 +180,7 @@ class Main extends PluginBase implements Listener {
 		}
 
 		$this->trackedSlappers[$entity->getId()] = $countInfo;
-		$countInfo->toNbt($entity->namedtag);
+		$countInfo->toNbt($entity->saveNBT());
 		$this->updateSlapperEntity($entity);
 	}
 
@@ -201,7 +195,7 @@ class Main extends PluginBase implements Listener {
 
 	public function onSlapperLoad(EntitySpawnEvent $ev) : void {
 		$entity = $ev->getEntity();
-		if(!$entity instanceof SlapperInterface) {
+		if(!$entity instanceof SlapperEntity) {
 			return;
 		}
 
@@ -210,7 +204,7 @@ class Main extends PluginBase implements Listener {
 
 	public function onSlapperSave(EntityDespawnEvent $ev) : void {
 		$entity = $ev->getEntity();
-		if(!($entity instanceof SlapperInterface)) {
+		if(!($entity instanceof SlapperEntity)) {
 			return;
 		}
 

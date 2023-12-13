@@ -24,11 +24,13 @@ class SlapperPlayerCountEntityInfo {
 
 	public const TYPE_SERVER = 0;
 	public const TYPE_WORLD = 1;
+    public const PORT_INT_MIN = 1;
+    public const PORT_INT_MAX = 65535;
 
 	/**
 	 * Construct a new server player count instance.
 	 *
-	 * @param \pocketmine\world\World $world
+	 * @param World $world
 	 * @param string                  $nameTemplate
 	 * @param string                  $ip
 	 * @param int|string              $port
@@ -58,9 +60,9 @@ class SlapperPlayerCountEntityInfo {
 	/**
 	 * Construct a new world player count instance.
 	 *
-	 * @param \pocketmine\world\World        $world
+	 * @param World $world
 	 * @param string                         $nameTemplate
-	 * @param \pocketmine\world\World|string $targetWorld
+	 * @param World|string $targetWorld
 	 *
 	 * @return static|null
 	 */
@@ -86,7 +88,7 @@ class SlapperPlayerCountEntityInfo {
 	/**
 	 * Construct a new player count instance from a name tag.
 	 *
-	 * @param \pocketmine\world\World $world
+	 * @param World $world
 	 * @param string                  $nameTag
 	 *
 	 * @return static|null
@@ -129,14 +131,14 @@ class SlapperPlayerCountEntityInfo {
 
 		$type = $tag->getInt("Type");
 		$nameTemplate = $tag->getString("NameTemplate");
-		if($type === null or $nameTemplate === null) {
+		if($type === false or $nameTemplate === false) {
 			return null;
 		}
 
 		if($type === self::TYPE_SERVER) {
 			$ip = $tag->getString("Ip");
 			$port = $tag->getInt("Port");
-			if($ip === null or $port === null) {
+			if($ip === false or $port === false) {
 				return null;
 			}
 
@@ -200,7 +202,7 @@ class SlapperPlayerCountEntityInfo {
 	/**
 	 * Save the player count info to an entities NBT tag.
 	 *
-	 * @param \pocketmine\nbt\tag\CompoundTag $nbt
+	 * @param CompoundTag $nbt
 	 */
 	public function toNbt(CompoundTag $nbt) : void {
 		$tag = new CompoundTag();
@@ -227,7 +229,7 @@ class SlapperPlayerCountEntityInfo {
 	}
 
 	protected static function isValidPort(int $port) : bool {
-		return ($port >= 1 and $port <= 65535);
+		return ($port >= self::PORT_INT_MIN and $port <= self::PORT_INT_MAX);
 	}
 
 }

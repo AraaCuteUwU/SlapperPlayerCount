@@ -13,14 +13,14 @@ class QueryServer extends AsyncTask {
 	private $onlineMsg, $offlineMsg;
 
 	public function __construct(array $data, string $onlineMsg, string $offlineMsg) {
-		$this->data = $data;
+		$this->data = igbinary_serialize($data);
 		$this->onlineMsg = $onlineMsg;
 		$this->offlineMsg = $offlineMsg;
 	}
 
 	public function onRun() : void {
 		$completeData = [];
-		foreach($this->data as $data) {
+		foreach(igbinary_unserialize($this->data) as $data) {
 			try {
 				$queryData = PMQuery::query($data["ip"], $data["port"]);
 				$onlinePlayers = $queryData["Players"];
